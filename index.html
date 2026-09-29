@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Event Lab: 20 JavaScript Events</title>
+<style>
+:root{
+  --bg:#f3f6f4; --panel:#ffffff; --ink:#15211c; --muted:#5a6b63; --line:#cfd9d3;
+  --accent:#0f7a5c; --hit:#ffd23f; --hit-ink:#3a2f00; --bad:#c0392b; --good:#0f7a5c;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#101815;--panel:#18231e;--ink:#e6f0ea;--muted:#93a89d;--line:#2b3b33;--accent:#3ed6a3;--hit:#ffd23f;--hit-ink:#2a2100;--bad:#ff7b6b;--good:#3ed6a3}
+}
+:root[data-theme="dark"]{--bg:#101815;--panel:#18231e;--ink:#e6f0ea;--muted:#93a89d;--line:#2b3b33;--accent:#3ed6a3;--hit:#ffd23f;--hit-ink:#2a2100;--bad:#ff7b6b;--good:#3ed6a3}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Trebuchet MS","Segoe UI",system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(1.8rem,5vw,2.8rem);margin:0 0 4px;letter-spacing:-.02em}
+h2{font-family:Georgia,serif;font-size:1.2rem;margin:0 0 12px}
+.lead{color:var(--muted);margin:0 0 24px;max-width:60ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:20px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.row{grid-template-columns:1fr}}
+#box{height:150px;border-radius:10px;background:var(--accent);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  user-select:none;cursor:pointer;transition:transform .15s,background .2s,height .2s;text-align:center;padding:8px}
+#box small{opacity:.85}
+label{display:block;font-weight:600;margin:10px 0 4px}
+input,select,button{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+input:focus,select:focus,button:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+input.ok{border-color:var(--good)} input.no{border-color:var(--bad)}
+#hint{font-size:.9rem;min-height:1.4em;margin:4px 0 0}
+button{cursor:pointer;background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700;width:auto}
+.ghost{background:transparent;color:var(--accent)}
+#scroller{height:110px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:.9rem;color:var(--muted)}
+#bar{height:6px;background:var(--line);border-radius:3px;margin-top:8px}
+#bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ev{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;gap:8px;
+  background:var(--bg);transition:background .25s,color .25s}
+.ev b{font-family:Consolas,Menlo,monospace;font-size:.9rem}
+.ev.hit{background:var(--hit);color:var(--hit-ink);border-color:var(--hit)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+#score{font-weight:700}
+#log{height:170px;overflow:auto;font:.85rem/1.5 Consolas,Menlo,monospace;color:var(--muted);margin:0;padding-left:0;list-style:none}
+#banner{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translate(-50%,-140%);background:var(--ink);color:var(--bg);
+  padding:10px 18px;border-radius:24px;transition:transform .35s;z-index:9}
+#banner.show{transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="banner" role="status"></div>
+<main>
+  <h1>Event Lab</h1>
+  <p class="lead">Twenty different browser events, all wired up with JavaScript. Use the page yourself, or press the button to let the script fire every event for you.</p>
+
+  <section class="panel">
+    <div class="toolbar">
+      <button id="runAll">Run all 20 events</button>
+      <button id="reset" class="ghost">Reset counters</button>
+      <span id="score" aria-live="polite">0 / 20 events fired</span>
+    </div>
+    <div id="grid" aria-label="Event tracker"></div>
+  </section>
+
+  <div class="row">
+    <section class="panel">
+      <h2>Mouse and wheel</h2>
+      <div id="box" tabindex="0"><strong id="boxTitle">Interact with me</strong><small id="boxInfo">click, double-click, right-click, scroll</small></div>
+    </section>
+
+    <section class="panel">
+      <h2>Form and keyboard</h2>
+      <form id="form" novalidate>
+        <label for="user">Username</label>
+        <input id="user" autocomplete="off" placeholder="Start with a letter, 3-16 letters, digits or _">
+        <p id="hint"></p>
+        <label for="mood">Mood</label>
+        <select id="mood"><option value="😀">Happy</option><option value="😴">Sleepy</option><option value="🤓">Focused</option></select>
+        <p style="margin:12px 0 0"><button type="submit">Join</button> <span id="key" style="color:var(--muted)">last key: none</span></p>
+      </form>
+    </section>
+  </div>
+
+  <div class="row">
+    <section class="panel">
+      <h2>Scroll and window</h2>
+      <div id="scroller"><p>Scroll this box to fire the scroll event.</p><p>Every listener updates the tracker above.</p><p>JavaScript can also dispatch events by itself using dispatchEvent.</p><p>Keep going.</p><p>Almost at the bottom.</p><p>Done.</p></div>
+      <div id="bar"><i></i></div>
+      <p id="win" style="color:var(--muted);margin:8px 0 0"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Event log</h2>
+      <ul id="log"></ul>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const box = $('#box'), inp = $('#user'), sel = $('#mood'), form = $('#form'), sc = $('#scroller');
+
+/* Regular expression: a valid username starts with a letter, then 2-15 letters, digits or underscores */
+const USERNAME_RE = /^[A-Za-z][A-Za-z0-9_]{2,15}$/;
+
+/* The 20 events and where each one is listened for */
+const EVENTS = [
+  ['click', box], ['dblclick', box], ['mouseover', box], ['mouseout', box], ['mousemove', box],
+  ['mousedown', box], ['mouseup', box], ['contextmenu', box], ['wheel', box],
+  ['keydown', inp], ['keyup', inp], ['input', inp], ['focus', inp], ['blur', inp], ['copy', inp],
+  ['change', sel], ['submit', form], ['scroll', sc], ['resize', window], ['party', document]
+];
+
+const counts = {}, seen = new Set();
+const grid = $('#grid');
+EVENTS.forEach(([name]) => {
+  counts[name] = 0;
+  const d = document.createElement('div');
+  d.className = 'ev'; d.id = 'ev-' + name;
+  d.innerHTML = `<b>${name}</b><span>0</span>`;
+  grid.appendChild(d);
+});
+
+function banner(msg) {
+  const b = $('#banner'); b.textContent = msg; b.classList.add('show');
+  clearTimeout(banner.t); banner.t = setTimeout(() => b.classList.remove('show'), 1600);
+}
+
+let lastLog = 0;
+function record(e) {
+  const n = e.type;
+  counts[n]++; seen.add(n);
+  const el = $('#ev-' + n);
+  el.lastChild.textContent = counts[n];
+  el.classList.add('hit');
+  clearTimeout(el.t); el.t = setTimeout(() => el.classList.remove('hit'), 500);
+  $('#score').textContent = seen.size + ' / 20 events fired';
+  const now = Date.now();
+  if ((n !== 'mousemove' && n !== 'scroll' && n !== 'wheel') || now - lastLog > 250) {
+    lastLog = now;
+    const li = document.createElement('li');
+    li.textContent = new Date().toLocaleTimeString() + '  ' + n + (e.isTrusted ? '' : '  (fired by script)');
+    const log = $('#log'); log.prepend(li);
+    while (log.children.length > 40) log.lastChild.remove();
+  }
+}
+
+/* What each event actually does on the page */
+const behaviour = {
+  click: () => { box.style.background = `hsl(${Math.random() * 360 | 0} 60% 38%)`; },
+  dblclick: () => { box.style.height = box.style.height === '90px' ? '150px' : '90px'; },
+  mouseover: () => { $('#boxTitle').textContent = 'Hello!'; },
+  mouseout: () => { $('#boxTitle').textContent = 'Interact with me'; },
+  mousemove: e => { $('#boxInfo').textContent = `x: ${e.offsetX || 0}, y: ${e.offsetY || 0}`; },
+  mousedown: () => { box.style.transform = 'scale(.96)'; },
+  mouseup: () => { box.style.transform = ''; },
+  contextmenu: e => { e.preventDefault(); banner('Right-click caught: default menu blocked'); },
+  wheel: e => { box.style.filter = `hue-rotate(${(Math.abs(e.deltaY || 40) * 3) % 360}deg)`; },
+  keydown: e => { $('#key').textContent = 'last key: ' + (e.key || 'none'); },
+  keyup: () => {},
+  input: () => { validate(); },
+  focus: () => { inp.style.background = 'var(--panel)'; },
+  blur: () => { inp.style.background = ''; },
+  copy: () => { banner('Username copied'); },
+  change: () => { banner('Mood: ' + sel.value); },
+  submit: e => {
+    e.preventDefault();
+    banner(validate() ? 'Welcome, ' + inp.value + '!' : 'Fix the username first');
+  },
+  scroll: () => {
+    const pct = sc.scrollTop / Math.max(1, sc.scrollHeight - sc.clientHeight) * 100;
+    $('#bar i').style.width = pct + '%';
+  },
+  resize: () => { $('#win').textContent = `Window: ${innerWidth} x ${innerHeight}px`; },
+  party: e => { banner((e.detail && e.detail.msg) || '🎉 Custom event received'); }
+};
+
+function validate() {
+  const v = inp.value;
+  const h = $('#hint');
+  if (!v) { inp.className = ''; h.textContent = ''; return false; }
+  const ok = USERNAME_RE.test(v);
+  inp.className = ok ? 'ok' : 'no';
+  h.style.color = ok ? 'var(--good)' : 'var(--bad)';
+  h.textContent = ok ? 'Looks good.'
+    : /^[^A-Za-z]/.test(v) ? 'Start with a letter.'
+    : /[^A-Za-z0-9_]/.test(v) ? 'Use only letters, digits and underscores.'
+    : 'Use 3 to 16 characters.';
+  return ok;
+}
+
+EVENTS.forEach(([name, target]) => {
+  target.addEventListener(name, e => { record(e); behaviour[name](e); });
+});
+
+/* JavaScript triggers all 20 events itself with dispatchEvent */
+const M = t => new MouseEvent(t, { bubbles: true, cancelable: true });
+const FIRE = {
+  click: () => box.dispatchEvent(M('click')),
+  dblclick: () => box.dispatchEvent(M('dblclick')),
+  mouseover: () => box.dispatchEvent(M('mouseover')),
+  mouseout: () => box.dispatchEvent(M('mouseout')),
+  mousemove: () => box.dispatchEvent(M('mousemove')),
+  mousedown: () => box.dispatchEvent(M('mousedown')),
+  mouseup: () => box.dispatchEvent(M('mouseup')),
+  contextmenu: () => box.dispatchEvent(M('contextmenu')),
+  wheel: () => box.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaY: 60 })),
+  keydown: () => inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true })),
+  keyup: () => inp.dispatchEvent(new KeyboardEvent('keyup', { key: 'a', bubbles: true })),
+  input: () => { inp.value = 'Claude_2026'; inp.dispatchEvent(new Event('input', { bubbles: true })); },
+  focus: () => inp.dispatchEvent(new FocusEvent('focus')),
+  blur: () => inp.dispatchEvent(new FocusEvent('blur')),
+  copy: () => inp.dispatchEvent(new Event('copy', { bubbles: true })),
+  change: () => { sel.value = '🤓'; sel.dispatchEvent(new Event('change', { bubbles: true })); },
+  submit: () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })),
+  scroll: () => { sc.scrollTop = sc.scrollHeight; sc.dispatchEvent(new Event('scroll')); },
+  resize: () => window.dispatchEvent(new Event('resize')),
+  party: () => document.dispatchEvent(new CustomEvent('party', { detail: { msg: '🎉 All events fired!' } }))
+};
+
+$('#runAll').addEventListener('click', async () => {
+  const btn = $('#runAll'); btn.disabled = true;
+  for (const [name] of EVENTS) {
+    FIRE[name]();
+    await new Promise(r => setTimeout(r, 220));
+  }
+  btn.disabled = false;
+});
+
+$('#reset').addEventListener('click', () => {
+  seen.clear();
+  EVENTS.forEach(([n]) => { counts[n] = 0; $('#ev-' + n).lastChild.textContent = 0; });
+  $('#score').textContent = '0 / 20 events fired';
+  $('#log').innerHTML = ''; inp.value = ''; validate(); sc.scrollTop = 0;
+});
+
+/* Fire a first resize so the window size shows on load */
+$('#win').textContent = `Window: ${innerWidth} x ${innerHeight}px`;
+</script>
+</body>
+</html>
